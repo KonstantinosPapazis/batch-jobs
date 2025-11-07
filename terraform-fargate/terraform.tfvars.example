@@ -1,0 +1,105 @@
+# -----------------------------------------------------------------------------
+# Example Terraform Variables for AWS Batch with Fargate
+# Copy this file to terraform.tfvars and customize for your environment
+# -----------------------------------------------------------------------------
+
+# Project Configuration
+project_name = "batch-jobs"
+environment  = "prod"
+aws_region   = "us-east-1"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+
+# Network Options for Fargate
+# IMPORTANT: Fargate needs either NAT Gateway OR VPC Endpoints to pull images
+# VPC endpoints are recommended (cheaper and faster)
+enable_nat_gateway   = false  # Set to false if using VPC endpoints
+enable_vpc_endpoints = true   # Recommended for Fargate (saves ~$15-20/month vs NAT)
+
+# Fargate Compute Resources
+max_vcpus = 256  # Maximum concurrent vCPUs
+
+# Fargate Platform Version
+fargate_platform_version = "LATEST"  # Use latest Fargate platform
+
+# Job Queue Configuration
+job_queue_priority = 1
+job_queue_state    = "ENABLED"
+
+# Default Job Resources (used for example job definitions)
+# Valid Fargate combinations:
+#   0.25 vCPU: 512, 1024, 2048 MB
+#   0.5 vCPU:  1024, 2048, 3072, 4096 MB
+#   1 vCPU:    2048-8192 MB (1024 MB increments)
+#   2 vCPU:    4096-16384 MB (1024 MB increments)
+#   4 vCPU:    8192-30720 MB (1024 MB increments)
+default_job_vcpu   = "0.25"  # Start small, scale as needed
+default_job_memory = "512"   # Must match vCPU requirements
+
+# ECR Configuration
+ecr_repository_name      = "batch-jobs-fargate"
+ecr_image_scanning       = true
+ecr_image_tag_mutability = "MUTABLE"
+ecr_lifecycle_policy     = true
+ecr_lifecycle_count      = 10
+
+# CloudWatch Configuration
+log_retention_days = 30
+
+# EventBridge Scheduling (Optional)
+# Uncomment to enable scheduled job execution
+# enable_eventbridge_schedule = true
+# schedule_expression         = "cron(0 2 * * ? *)"  # Daily at 2 AM UTC
+# schedule_job_definition     = ""  # Leave empty to use small job definition
+
+# Monitoring and Alerting
+enable_monitoring = true
+# alarm_email       = "your-email@example.com"  # Uncomment to receive alerts
+
+# Resource Tags
+tags = {
+  Owner       = "DevOps Team"
+  CostCenter  = "Engineering"
+  Terraform   = "true"
+  ComputeType = "Fargate"
+}
+
+# -----------------------------------------------------------------------------
+# FARGATE-SPECIFIC NOTES:
+# -----------------------------------------------------------------------------
+# 
+# 1. NETWORKING:
+#    - Fargate requires VPC endpoints OR NAT Gateway to pull ECR images
+#    - VPC endpoints are recommended (cheaper and faster)
+#    - If using NAT Gateway, set enable_nat_gateway = true
+#
+# 2. RESOURCE COMBINATIONS:
+#    - Fargate has specific vCPU/memory combinations (see above)
+#    - Choose combinations that match your workload
+#
+# 3. COSTS (2 jobs/day, 30 min each):
+#    - Fargate: ~$4-15/month
+#    - No spot instances available (Fargate pricing is fixed)
+#    - Still cheaper than EC2 on-demand for light workloads
+#
+# 4. COLD STARTS:
+#    - Fargate: 30-60 seconds
+#    - Faster than EC2 (2-5 minutes)
+#
+# 5. WHEN TO USE FARGATE:
+#    - Sporadic, unpredictable workloads
+#    - Simplicity over cost optimization
+#    - Fast cold starts important
+#    - Don't want to manage instances
+#
+# 6. WHEN TO USE EC2:
+#    - Regular, predictable workloads (like 1-2x/day)
+#    - Maximum cost savings (spot instances)
+#    - Need GPUs or specific instance types
+#
+# -----------------------------------------------------------------------------
+

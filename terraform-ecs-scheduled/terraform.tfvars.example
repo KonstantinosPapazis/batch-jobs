@@ -1,0 +1,123 @@
+# -----------------------------------------------------------------------------
+# Example Configuration for ECS Scheduled Tasks
+# Using Your Existing ECS Cluster
+# -----------------------------------------------------------------------------
+
+# Project Configuration
+project_name = "batch-jobs"
+environment  = "prod"
+aws_region   = "us-east-1"
+
+# -----------------------------------------------------------------------------
+# IMPORTANT: Specify Your Existing ECS Cluster
+# -----------------------------------------------------------------------------
+existing_cluster_name = "my-existing-ecs-cluster"  # REQUIRED: Your cluster name
+
+# Optional: If you want to look up VPC/subnet info automatically
+# existing_vpc_id = "vpc-xxxxx"
+# subnet_tags = {
+#   Type = "private"
+# }
+
+# -----------------------------------------------------------------------------
+# Task Configuration
+# -----------------------------------------------------------------------------
+
+# Launch type - use what your cluster supports
+launch_type = "FARGATE"  # or "EC2" if using EC2 cluster
+
+# Fargate CPU/Memory combinations:
+#   CPU: 256  (.25 vCPU) | Memory: 512, 1024, 2048
+#   CPU: 512  (.5 vCPU)  | Memory: 1024, 2048, 3072, 4096
+#   CPU: 1024 (1 vCPU)   | Memory: 2048-8192
+#   CPU: 2048 (2 vCPU)   | Memory: 4096-16384
+#   CPU: 4096 (4 vCPU)   | Memory: 8192-30720
+task_cpu    = "256"
+task_memory = "512"
+
+# Container image - update after pushing to ECR
+container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/batch-jobs:latest"
+
+# Network configuration - REQUIRED
+# Use your existing subnets and security groups
+task_subnets = [
+  "subnet-xxxxx",  # Replace with your subnet IDs
+  "subnet-yyyyy"
+]
+
+task_security_groups = [
+  "sg-xxxxx"  # Replace with your security group ID
+]
+
+# Assign public IP only if needed (e.g., pulling from Docker Hub)
+# If using ECR with VPC endpoints, set to false
+assign_public_ip = false
+
+# -----------------------------------------------------------------------------
+# Scheduling
+# -----------------------------------------------------------------------------
+
+# When to run the task
+schedule_expression = "cron(0 2 * * ? *)"  # Daily at 2 AM UTC
+
+# Enable/disable the schedule
+schedule_enabled = true
+
+# Common schedule expressions:
+# - Daily at 2 AM:      "cron(0 2 * * ? *)"
+# - Twice daily:        "cron(0 2,14 * * ? *)"
+# - Every hour:         "rate(1 hour)"
+# - Every 30 minutes:   "rate(30 minutes)"
+# - Weekdays at 9 AM:   "cron(0 9 ? * MON-FRI *)"
+
+# -----------------------------------------------------------------------------
+# ECR Repository (Optional)
+# -----------------------------------------------------------------------------
+
+# Set to true if you need a new ECR repository for this project
+# Set to false if you're using an existing ECR repo
+create_ecr_repository = false
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# -----------------------------------------------------------------------------
+
+log_retention_days = 30
+
+enable_alerts = true
+# alert_email   = "your-email@example.com"  # Uncomment to receive alerts
+
+# -----------------------------------------------------------------------------
+# SETUP INSTRUCTIONS:
+# -----------------------------------------------------------------------------
+#
+# 1. UPDATE REQUIRED FIELDS:
+#    - existing_cluster_name (your ECS cluster name)
+#    - container_image (after pushing to ECR)
+#    - task_subnets (your subnet IDs)
+#    - task_security_groups (your security group IDs)
+#
+# 2. VERIFY CLUSTER CAPACITY:
+#    If using EC2 launch type, ensure your cluster has available capacity
+#    aws ecs describe-clusters --clusters my-existing-ecs-cluster
+#
+# 3. SECURITY GROUP REQUIREMENTS:
+#    Your security group must allow:
+#    - Outbound HTTPS (443) to ECR (for pulling images)
+#    - Outbound HTTPS (443) to CloudWatch (for logs)
+#    - Any other ports your application needs
+#
+# 4. SUBNET REQUIREMENTS:
+#    - For public subnets: Must have internet gateway
+#    - For private subnets: Must have NAT gateway OR VPC endpoints
+#
+# 5. DEPLOY:
+#    terraform init
+#    terraform plan
+#    terraform apply
+#
+# 6. TEST MANUALLY FIRST:
+#    Use the output command to run task manually before enabling schedule
+#
+# -----------------------------------------------------------------------------
+

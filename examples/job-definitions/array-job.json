@@ -1,0 +1,59 @@
+{
+  "jobDefinitionName": "parallel-processing-array-job",
+  "type": "container",
+  "platformCapabilities": ["EC2"],
+  "containerProperties": {
+    "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/batch-jobs:latest",
+    "resourceRequirements": [
+      {
+        "type": "VCPU",
+        "value": "1"
+      },
+      {
+        "type": "MEMORY",
+        "value": "2048"
+      }
+    ],
+    "command": [
+      "python",
+      "app.py",
+      "--array-index",
+      "Ref::AWS_BATCH_JOB_ARRAY_INDEX"
+    ],
+    "jobRoleArn": "arn:aws:iam::123456789012:role/batch-jobs-prod-batch-job-role",
+    "executionRoleArn": "arn:aws:iam::123456789012:role/batch-jobs-prod-batch-execution-role",
+    "environment": [
+      {
+        "name": "ENVIRONMENT",
+        "value": "production"
+      },
+      {
+        "name": "PROCESSING_MODE",
+        "value": "parallel"
+      },
+      {
+        "name": "ARRAY_SIZE",
+        "value": "10"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/aws/batch/batch-jobs-prod",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "array-job"
+      }
+    }
+  },
+  "retryStrategy": {
+    "attempts": 2
+  },
+  "timeout": {
+    "attemptDurationSeconds": 900
+  },
+  "tags": {
+    "JobType": "ArrayJob",
+    "ParallelProcessing": "true"
+  }
+}
+

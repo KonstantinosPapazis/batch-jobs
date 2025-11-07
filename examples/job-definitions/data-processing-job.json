@@ -1,0 +1,90 @@
+{
+  "jobDefinitionName": "data-processing-job",
+  "type": "container",
+  "platformCapabilities": ["EC2"],
+  "containerProperties": {
+    "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/batch-jobs:latest",
+    "resourceRequirements": [
+      {
+        "type": "VCPU",
+        "value": "2"
+      },
+      {
+        "type": "MEMORY",
+        "value": "4096"
+      }
+    ],
+    "command": ["python", "app.py"],
+    "jobRoleArn": "arn:aws:iam::123456789012:role/batch-jobs-prod-batch-job-role",
+    "executionRoleArn": "arn:aws:iam::123456789012:role/batch-jobs-prod-batch-execution-role",
+    "environment": [
+      {
+        "name": "ENVIRONMENT",
+        "value": "production"
+      },
+      {
+        "name": "PROCESSING_MODE",
+        "value": "batch"
+      },
+      {
+        "name": "INPUT_PATH",
+        "value": "s3://my-bucket/input/"
+      },
+      {
+        "name": "OUTPUT_PATH",
+        "value": "s3://my-bucket/output/"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "DATABASE_URL",
+        "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:batch-jobs/prod/database-url"
+      },
+      {
+        "name": "API_KEY",
+        "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/batch-jobs/prod/api-key"
+      }
+    ],
+    "mountPoints": [],
+    "volumes": [],
+    "ulimits": [],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/aws/batch/batch-jobs-prod",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "data-processing"
+      }
+    }
+  },
+  "retryStrategy": {
+    "attempts": 3,
+    "evaluateOnExit": [
+      {
+        "action": "RETRY",
+        "onStatusReason": "Host EC2*"
+      },
+      {
+        "action": "RETRY",
+        "onStatusReason": "Task failed to start"
+      },
+      {
+        "action": "RETRY",
+        "onExitCode": "1"
+      },
+      {
+        "action": "EXIT",
+        "onExitCode": "0"
+      }
+    ]
+  },
+  "timeout": {
+    "attemptDurationSeconds": 3600
+  },
+  "tags": {
+    "JobType": "DataProcessing",
+    "Environment": "Production",
+    "CostCenter": "Engineering"
+  }
+}
+

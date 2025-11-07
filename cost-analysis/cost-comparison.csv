@@ -1,0 +1,79 @@
+Solution,Component,Unit Cost,Usage (Monthly),Monthly Cost,Annual Cost,Notes
+On-Premise,Server Hardware (amortized),$50,1,$50,$600,3-year depreciation
+On-Premise,Power Consumption,$0.12/kWh,333 kWh,$40,$480,24/7 operation
+On-Premise,Cooling/HVAC,$25,1,$25,$300,Datacenter overhead
+On-Premise,Network/Bandwidth,$15,1,$15,$180,Dedicated connection
+On-Premise,Maintenance/Support,$75,1,$75,$900,Staff time
+On-Premise,Physical Space,$40,1,$40,$480,Rack space
+On-Premise,Monitoring Tools,$15,1,$15,$180,APM and logging
+On-Premise,TOTAL,,,,$260,$3120,
+
+AWS Batch (On-Demand),EC2 Compute (t3.medium),$0.0416/hr,30 hrs,$1.25,$15,2 jobs/day x 30min
+AWS Batch (On-Demand),ECR Storage,$0.10/GB,2 GB,$0.20,$2.40,Docker images
+AWS Batch (On-Demand),CloudWatch Logs,$0.50/GB,5 GB,$2.50,$30,30-day retention
+AWS Batch (On-Demand),S3 Storage,$0.023/GB,100 GB,$2.30,$27.60,Input/output data
+AWS Batch (On-Demand),NAT Gateway,$0.045/hr,720 hrs,$32.40,$388.80,Private subnet internet access
+AWS Batch (On-Demand),NAT Data Processing,$0.045/GB,50 GB,$2.25,$27,Data through NAT
+AWS Batch (On-Demand),TOTAL,,,$40.90,$490.80,
+
+AWS Batch (Spot),EC2 Compute (t3.medium spot),$0.0125/hr,30 hrs,$0.38,$4.50,70% discount
+AWS Batch (Spot),ECR Storage,$0.10/GB,2 GB,$0.20,$2.40,Docker images
+AWS Batch (Spot),CloudWatch Logs,$0.50/GB,5 GB,$2.50,$30,30-day retention
+AWS Batch (Spot),S3 Storage,$0.023/GB,100 GB,$2.30,$27.60,Input/output data
+AWS Batch (Spot),NAT Gateway,$0.045/hr,720 hrs,$32.40,$388.80,Can be avoided with VPC endpoints
+AWS Batch (Spot),NAT Data Processing,$0.045/GB,50 GB,$2.25,$27,Can be avoided with VPC endpoints
+AWS Batch (Spot),TOTAL,,,$40.03,$480.30,
+
+AWS Batch (Optimized),EC2 Compute (t3.medium spot),$0.0125/hr,30 hrs,$0.38,$4.50,70% discount
+AWS Batch (Optimized),ECR Storage,$0.10/GB,2 GB,$0.20,$2.40,Docker images
+AWS Batch (Optimized),CloudWatch Logs,$0.50/GB,2 GB,$1.00,$12,Reduced logging
+AWS Batch (Optimized),S3 Storage,$0.023/GB,100 GB,$2.30,$27.60,Input/output data
+AWS Batch (Optimized),VPC Endpoint (S3),$0.01/GB,50 GB,$0.50,$6,Replaces NAT
+AWS Batch (Optimized),VPC Endpoint (ECR),$7,1,$7,$84,Monthly charge
+AWS Batch (Optimized),TOTAL,,,$11.38,$136.50,Best optimized configuration
+
+Step Functions,State Transitions,$0.025/1000,360,$0.01,$0.12,Simple workflow
+Step Functions,Lambda Executions,$0.20/1M,60,$0.01,$0.12,Orchestration
+Step Functions,Lambda Duration,$0.0000166667/GB-sec,1800 GB-sec,$30.00,$360,Actual job execution
+Step Functions,CloudWatch Logs,$0.50/GB,3 GB,$1.50,$18,30-day retention
+Step Functions,S3 Storage,$0.023/GB,100 GB,$2.30,$27.60,Input/output data
+Step Functions,TOTAL,,,$33.82,$405.84,
+
+AWS MWAA (Small),Environment (mw1.small),$0.49/hr,720 hrs,$352.80,$4233.60,Always-on infrastructure
+AWS MWAA (Small),Additional Worker,$0.49/hr,0 hrs,$0.00,$0,Not needed initially
+AWS MWAA (Small),S3 Storage (DAGs),$0.023/GB,1 GB,$0.02,$0.29,Minimal
+AWS MWAA (Small),CloudWatch Logs,$0.50/GB,10 GB,$5.00,$60,More verbose logging
+AWS MWAA (Small),TOTAL,,,$357.82,$4293.89,
+
+AWS MWAA (Medium),Environment (mw1.medium),$0.98/hr,720 hrs,$705.60,$8467.20,For larger workloads
+AWS MWAA (Medium),Additional Worker,$0.98/hr,0 hrs,$0.00,$0,Not needed initially
+AWS MWAA (Medium),S3 Storage (DAGs),$0.023/GB,1 GB,$0.02,$0.29,Minimal
+AWS MWAA (Medium),CloudWatch Logs,$0.50/GB,15 GB,$7.50,$90,More verbose logging
+AWS MWAA (Medium),TOTAL,,,$713.12,$8557.49,
+
+Prefect (Free Tier),Prefect Cloud,$0,1,$0.00,$0,Up to 20k task runs/month
+Prefect (Free Tier),Agent (ECS t3.small),$0.0208/hr,720 hrs,$14.98,$179.71,Always-on agent
+Prefect (Free Tier),CloudWatch Logs,$0.50/GB,2 GB,$1.00,$12,Agent logs
+Prefect (Free Tier),Compute (Fargate),$0.04048/hr,30 hrs,$1.21,$14.57,Job execution
+Prefect (Free Tier),S3 Storage,$0.023/GB,50 GB,$1.15,$13.80,Flow storage
+Prefect (Free Tier),TOTAL,,,$18.34,$220.08,
+
+Prefect (Starter),Prefect Cloud,$250,1,$250.00,$3000,Up to 100k task runs/month
+Prefect (Starter),Agent (ECS t3.small),$0.0208/hr,720 hrs,$14.98,$179.71,Always-on agent
+Prefect (Starter),CloudWatch Logs,$0.50/GB,2 GB,$1.00,$12,Agent logs
+Prefect (Starter),Compute (Fargate),$0.04048/hr,30 hrs,$1.21,$14.57,Job execution
+Prefect (Starter),S3 Storage,$0.023/GB,50 GB,$1.15,$13.80,Flow storage
+Prefect (Starter),TOTAL,,,$268.34,$3220.08,
+
+Summary,,,,,
+Solution,Monthly Cost,Annual Cost,vs On-Premise (Monthly),vs On-Premise (%),Recommendation
+On-Premise,$260,$3120,$0,0%,Baseline
+AWS Batch (Optimized),$11.38,$136.50,-$248.62,-95.6%,⭐ BEST CHOICE
+AWS Batch (Spot),$40.03,$480.30,-$219.97,-84.6%,Excellent
+AWS Batch (On-Demand),$40.90,$490.80,-$219.10,-84.3%,Good
+Step Functions,$33.82,$405.84,-$226.18,-87.0%,Good for orchestration
+Prefect (Free Tier),$18.34,$220.08,-$241.66,-93.0%,Good alternative
+Prefect (Starter),$268.34,$3220.08,$8.34,3.2%,Only if needed
+AWS MWAA (Small),$357.82,$4293.89,$97.82,37.6%,❌ Too expensive
+AWS MWAA (Medium),$713.12,$8557.49,$453.12,174.3%,❌ Way too expensive
+

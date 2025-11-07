@@ -1,0 +1,71 @@
+# -----------------------------------------------------------------------------
+# Example Terraform Variables Configuration
+# Copy this file to terraform.tfvars and customize for your environment
+# -----------------------------------------------------------------------------
+
+# Project Configuration
+project_name = "batch-jobs"
+environment  = "prod"  # Options: dev, staging, prod
+aws_region   = "us-east-1"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+
+# Network Options
+# Set to false to save ~$32/month (VPC endpoints will be used instead)
+enable_nat_gateway = false
+
+# Enable VPC endpoints to avoid NAT Gateway costs
+enable_vpc_endpoints = true
+
+# AWS Batch Configuration
+compute_environment_type = "EC2"      # Options: EC2, FARGATE
+compute_type             = "SPOT"     # Options: SPOT, ON_DEMAND
+spot_bid_percentage      = 80         # Maximum percentage of on-demand price
+
+# Compute Resources
+min_vcpus     = 0    # Scale to zero when idle (recommended)
+max_vcpus     = 256  # Maximum vCPUs available
+desired_vcpus = 0    # Starting vCPUs
+
+# Instance types (use "optimal" to let AWS choose, or specify types)
+instance_types = ["optimal"]
+# instance_types = ["t3.medium", "t3.large", "c5.large"]
+
+# Optional: EC2 key pair for SSH access to compute instances
+# ec2_key_pair = "my-key-pair"
+
+# Job Queue Configuration
+job_queue_priority = 1
+job_queue_state    = "ENABLED"  # Options: ENABLED, DISABLED
+
+# ECR Configuration
+ecr_repository_name      = "batch-jobs"
+ecr_image_scanning       = true
+ecr_image_tag_mutability = "MUTABLE"  # Options: MUTABLE, IMMUTABLE
+ecr_lifecycle_policy     = true
+ecr_lifecycle_count      = 10  # Keep last 10 images
+
+# CloudWatch Configuration
+log_retention_days = 30  # Options: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, etc.
+
+# EventBridge Scheduling (Optional)
+# Uncomment to enable scheduled job execution
+# enable_eventbridge_schedule = true
+# schedule_expression         = "cron(0 2 * * ? *)"  # Daily at 2 AM UTC
+# schedule_job_definition     = "my-job-definition"   # Leave empty to use example job
+
+# Monitoring and Alerting
+enable_monitoring = true
+# alarm_email       = "your-email@example.com"  # Email for CloudWatch alarms
+
+# Resource Tags
+tags = {
+  Owner      = "DevOps Team"
+  CostCenter = "Engineering"
+  Terraform  = "true"
+}
+
