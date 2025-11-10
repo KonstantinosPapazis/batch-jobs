@@ -1,0 +1,176 @@
+# =============================================================================
+# Production Configuration for AWS Batch with Fargate
+# Data Science Team - Using Nexus Registry
+# =============================================================================
+# 
+# INSTRUCTIONS:
+# 1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+# 2. Update all values marked with "CHANGE ME"
+# 3. Run: terraform init && terraform plan && terraform apply
+# 
+# =============================================================================
+
+# =============================================================================
+# Core Configuration
+# =============================================================================
+
+project_name = "batch-jobs"
+team_name    = "datascience"
+environment  = "prod"
+aws_region   = "us-east-1"
+
+# =============================================================================
+# Nexus Registry Configuration (CHANGE ME)
+# =============================================================================
+
+# Your Nexus registry URL
+nexus_registry_url = "nexus.company.com:5000"  # CHANGE ME
+
+# ARN of the secret containing Nexus credentials
+# Create with: aws secretsmanager create-secret --name batch-jobs/datascience/nexus-credentials --secret-string '{"username":"user","password":"pass","registry":"nexus.company.com:5000"}'
+nexus_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:batch-jobs/datascience/nexus-credentials-AbCdEf"  # CHANGE ME
+
+# Full container image path from Nexus
+container_image = "nexus.company.com:5000/datascience/daily-job:latest"  # CHANGE ME
+
+# =============================================================================
+# VPC Configuration
+# =============================================================================
+
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# Create VPC endpoints to save NAT Gateway costs (~$30/month savings)
+create_vpc_endpoints = true
+
+# =============================================================================
+# Fargate Task Configuration
+# =============================================================================
+
+# Resource allocation for your job
+# Start small and increase if needed
+task_vcpu   = "0.25"  # Options: "0.25", "0.5", "1", "2", "4"
+task_memory = "512"   # Must match vCPU requirements (see docs)
+
+# Valid Fargate combinations:
+# - 0.25 vCPU: 512, 1024, 2048 MB
+# - 0.5 vCPU:  1024, 2048, 3072, 4096 MB
+# - 1 vCPU:    2048-8192 MB (1024 MB increments)
+# - 2 vCPU:    4096-16384 MB (1024 MB increments)
+# - 4 vCPU:    8192-30720 MB (1024 MB increments)
+
+# Maximum execution time (in seconds)
+task_timeout_seconds = 3600  # 1 hour
+
+# =============================================================================
+# Batch Configuration
+# =============================================================================
+
+# Maximum vCPUs for the compute environment
+# This limits concurrent job execution
+max_vcpus = 256
+
+# Number of retry attempts if job fails
+job_attempts = 2
+
+# =============================================================================
+# Scheduling - Daily at 2 AM UTC
+# =============================================================================
+
+# Cron expression for job execution
+schedule_expression = "cron(0 2 * * ? *)"  # Daily at 2 AM UTC
+
+# Enable or disable the schedule
+schedule_enabled = true
+
+# TIME ZONE REFERENCE (EventBridge uses UTC):
+# - 2 AM EST (UTC-5):  "cron(0 7 * * ? *)"
+# - 2 AM PST (UTC-8):  "cron(0 10 * * ? *)"
+# - 2 AM CET (UTC+1):  "cron(0 1 * * ? *)"
+
+# SCHEDULE EXAMPLES:
+# - Daily at 2 AM:         "cron(0 2 * * ? *)"
+# - Twice daily (2AM, 2PM): "cron(0 2,14 * * ? *)"
+# - Every 6 hours:         "rate(6 hours)"
+# - Weekdays at 9 AM:      "cron(0 9 ? * MON-FRI *)"
+# - First of month at 2 AM: "cron(0 2 1 * ? *)"
+# - Every Monday at 3 AM:  "cron(0 3 ? * MON *)"
+
+# =============================================================================
+# Environment Variables for Container
+# =============================================================================
+
+# These are passed to your container at runtime
+container_environment_vars = {
+  ENVIRONMENT = "production"
+  LOG_LEVEL   = "INFO"
+  # Add your custom variables here
+  # DATA_BUCKET = "s3://my-data-bucket"
+  # API_ENDPOINT = "https://api.company.com"
+}
+
+# =============================================================================
+# S3 Access Configuration
+# =============================================================================
+
+# S3 buckets the data science team can access
+# Update with your actual bucket names
+s3_bucket_arns = [
+  "arn:aws:s3:::datascience-prod",
+  "arn:aws:s3:::datascience-prod/*",
+  "arn:aws:s3:::data-lake-prod/datascience/*",
+  # Add more buckets as needed
+]
+
+# =============================================================================
+# Monitoring & Alerting
+# =============================================================================
+
+# CloudWatch log retention
+log_retention_days = 30  # Options: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365
+
+# Enable monitoring and alarms
+enable_monitoring = true
+
+# Email for CloudWatch alarm notifications
+alert_email = "datascience-team@company.com"  # CHANGE ME
+
+# =============================================================================
+# Additional Tags
+# =============================================================================
+
+additional_tags = {
+  Owner       = "DataScienceTeam"
+  CostCenter  = "DataScience"
+  Compliance  = "Internal"
+  Backup      = "NotRequired"
+}
+
+# =============================================================================
+# DEPLOYMENT CHECKLIST:
+# =============================================================================
+# 
+# Before deploying, ensure:
+# 
+# 1. ✅ Nexus credentials are stored in Secrets Manager
+#    aws secretsmanager create-secret \
+#      --name batch-jobs/datascience/nexus-credentials \
+#      --secret-string '{"username":"your-user","password":"your-pass","registry":"nexus.company.com:5000"}'
+# 
+# 2. ✅ Your VPC can reach Nexus (VPN/Direct Connect if on-premise)
+# 
+# 3. ✅ Container image exists in Nexus and path is correct
+# 
+# 4. ✅ S3 bucket names are correct and exist
+# 
+# 5. ✅ Alert email is valid and monitored
+# 
+# 6. ✅ Schedule expression matches your desired timezone (converted to UTC)
+# 
+# THEN RUN:
+# terraform init
+# terraform plan
+# terraform apply
+# 
+# =============================================================================
+
