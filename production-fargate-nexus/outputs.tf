@@ -161,13 +161,13 @@ output "deployment_summary" {
     ================================================================================
     
     To manually run a job now:
-    ${chomp(self.manual_job_submission_command)}
+    aws batch submit-job --job-name "manual-test-$(date +%%Y%%m%%d-%%H%%M%%S)" --job-queue ${aws_batch_job_queue.main.name} --job-definition ${aws_batch_job_definition.main.name} --region ${var.aws_region}
     
     To view logs:
-    ${chomp(self.view_logs_command)}
+    aws logs tail ${aws_cloudwatch_log_group.batch_jobs.name} --follow --region ${var.aws_region}
     
     To disable schedule:
-    ${chomp(self.disable_schedule_command)}
+    aws events disable-rule --name ${aws_cloudwatch_event_rule.daily_job.name} --region ${var.aws_region}
     
     ================================================================================
   EOT
